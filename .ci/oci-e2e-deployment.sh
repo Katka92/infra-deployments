@@ -19,6 +19,10 @@ export REPO_OWNER=${REPO_OWNER:-"redhat-appstudio"}
 export REPO_NAME=${REPO_NAME:-"infra-deployments"}
 export PULL_NUMBER=${PULL_NUMBER:-"periodic"}
 
+# Env vars for setting up pact broker
+export PACT_BROKER_SECRET_NAME=pact-broker-secrets
+export PACT_BROKER_SECRET_NAMESPACE=hac-pact-broker
+
 # Environment variable used to override the default "protected" image repository in HAS
 # https://github.com/redhat-appstudio/application-service/blob/6b9d21b8f835263b2e92f1e9343a1453caa2e561/gitops/generate_build.go#L50
 # Users are allowed to push images to this repo only in case the image contains a tag that consists of "<USER'S_NAMESPACE_NAME>-<CUSTOM-TAG>"
@@ -74,6 +78,18 @@ function createQuayPullSecrets() {
     rm docker.config
 }
 
+function createPactBrokerSecrets() {
+    echo -e "[INFO] Creating pact-broker related secrets in $PACT_BROKER_SECRET_NAMESPACE namespace"
+
+    kubectl create secret generic $PACT_BROKER_SECRET_NAME -n $PACT_BROKER_SECRET_NAMESPACE \
+        --from-literal=pact_broker_admin=admin \
+        --from-literal=pact_broker_admin_password=oNQjNjw0Pe3qEmlC \
+        --from-literal=pact_broker_user=dev \
+        --from-literal=pact_broker_user_password=ODc4YKW73IAMB5rJ \
+        --from-literal=password=DPA8wHUlx5j7WuEb \
+        --from-literal=username=pact_broker_user
+}
+
 function executeE2ETests() {
     # E2E instructions can be found: https://github.com/redhat-appstudio/e2e-tests
     # The e2e binary is included in Openshift CI test container from the dockerfile: https://github.com/redhat-appstudio/infra-deployments/blob/main/.ci/openshift-ci/Dockerfile
@@ -107,4 +123,5 @@ timeout --foreground 15m "$WORKSPACE"/hack/bootstrap-cluster.sh preview
 
 prepareWebhookVariables
 createQuayPullSecrets
+createPactBrokerSecrets
 executeE2ETests
