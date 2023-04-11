@@ -3,7 +3,7 @@
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"/..
 
 main() {
-    local mode keycloak toolchain obo
+    local mode keycloak toolchain obo broker
     while [[ $# -gt 0 ]]; do
         key=$1
         case $key in
@@ -17,6 +17,9 @@ main() {
             ;;
         --obo | -o)
             obo="--obo"
+            ;;
+        --broker | -b)
+            broker="--broker"
             shift
             ;;
         preview | upstream)
@@ -56,7 +59,7 @@ main() {
         fi
         ;;
     "preview")
-        $ROOT/hack/preview.sh $toolchain $keycloak $obo
+        $ROOT/hack/preview.sh $toolchain $keycloak $obo $broker
         ;;
     esac
 }
