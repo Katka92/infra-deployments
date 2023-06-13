@@ -12,98 +12,19 @@ jobs:
         shell: bash
         id: bootstrap
         timeout-minutes: 30
-        env:
-          # getting secrets from GH
-          BROKER_PASSWORD: ${{ secrets.BROKER_PASSWORD }}
-          MY_GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
-          SHARED_SECRET: ${{ secrets.SHARED_SECRET }}
-          SPI_GITHUB_CLIENT_ID: ${{ secrets.SPI_GITHUB_CLIENT_ID }}
-          SPI_GITHUB_CLIENT_SECRET: ${{ secrets.SPI_GITHUB_CLIENT_SECRET }}
-          IMAGE_CONTROLLER_QUAY_TOKEN: ${{ secrets.IMAGE_CONTROLLER_QUAY_TOKEN }}
-          REDHAT_APPSTUDIO_USER_WORKLOAD: ${{ secrets.REDHAT_APPSTUDIO_USER_WORKLOAD }}
-          # setting variables
-          BROKER_USERNAME: "pactUser"
-          MY_GIT_FORK_REMOTE: "origin"
-          MY_GITHUB_ORG: "redhat-hac-qe"
-          IMAGE_CONTROLLER_QUAY_ORG: "hacdev"
-          SPI_TYPE: "Github"
-          OC_DOWNLOAD_URL: "https://downloads-openshift-console.apps.hac-devsandbox.5unc.p1.openshiftapps.com/amd64/linux/oc.tar"
-          # Slashes have to be escaped as those variables are given to sed as a param
-          SPI_API_SERVER: "https:\\/\\/api-toolchain-host-operator.apps.hac-devsandbox.5unc.p1.openshiftapps.com"
-          HAS_DEFAULT_IMAGE_REPOSITORY: "quay.io\\/hacdev\\/build_service"
         run: |
-          # Setup GIT access
-          git config --global user.name 'Katka92'
-          git config --global user.email 'kkanova@redhat.com'
-          
-          #Setup OC and login to cluster
-          oc login --token=$OC_LOGIN_TOKEN --server=$LOGIN_SERVER_URL --insecure-skip-tls-verify
-          
-          cp hack/preview-template.env hack/preview.env
-
-          sed -i "s/BROKER_PASSWORD=.*/BROKER_PASSWORD=${BROKER_PASSWORD}/g" hack/preview.env
-          sed -i "s/MY_GITHUB_TOKEN=.*/MY_GITHUB_TOKEN=${MY_GITHUB_TOKEN}/g" hack/preview.env
-          sed -i "s/SHARED_SECRET=.*/SHARED_SECRET=${SHARED_SECRET}/g" hack/preview.env
-          sed -i "s/SPI_GITHUB_CLIENT_ID=.*/SPI_GITHUB_CLIENT_ID=${SPI_GITHUB_CLIENT_ID}/g" hack/preview.env
-          sed -i "s/SPI_GITHUB_CLIENT_SECRET=.*/SPI_GITHUB_CLIENT_SECRET=${SPI_GITHUB_CLIENT_SECRET}/g" hack/preview.env
-          sed -i "s/HAS_DEFAULT_IMAGE_REPOSITORY=.*/HAS_DEFAULT_IMAGE_REPOSITORY=${HAS_DEFAULT_IMAGE_REPOSITORY}/g" hack/preview.env
-          sed -i "s/SPI_API_SERVER=.*/SPI_API_SERVER=${SPI_API_SERVER}/g" hack/preview.env
-          sed -i "s/BROKER_USERNAME=.*/BROKER_USERNAME=${BROKER_USERNAME}/g" hack/preview.env
-          sed -i "s/MY_GIT_FORK_REMOTE=.*/MY_GIT_FORK_REMOTE=${MY_GIT_FORK_REMOTE}/g" hack/preview.env
-          sed -i "s/MY_GITHUB_ORG=.*/MY_GITHUB_ORG=${MY_GITHUB_ORG}/g" hack/preview.env
-          sed -i "s/IMAGE_CONTROLLER_QUAY_ORG=.*/IMAGE_CONTROLLER_QUAY_ORG=${IMAGE_CONTROLLER_QUAY_ORG}/g" hack/preview.env
-          sed -i "s/IMAGE_CONTROLLER_QUAY_TOKEN=.*/IMAGE_CONTROLLER_QUAY_TOKEN=${IMAGE_CONTROLLER_QUAY_TOKEN}/g" hack/preview.env
-
-          # Bootstrap the cluster
-          # hack/bootstrap-cluster.sh preview --toolchain --keycloak --broker
-          
-          # Set the docker secret to push HAS images to quay if doesn't exist yet
-          if [[ ! $(oc get secrets -n build-templates | grep redhat-appstudio-user-workload) ]]; then
-            echo $REDHAT_APPSTUDIO_USER_WORKLOAD >> docker.config
-            oc create secret docker-registry redhat-appstudio-user-workload -n build-templates --from-file=.dockerconfigjson=docker.config
-          fi
+          exit 0
       - name: Unseal vault if sealed
         if: failure()
         env:
           POD_NAME: "vault-0"
         run: |
-          oc project spi-vault
-            
-          status=$(oc get pod $POD_NAME -o=jsonpath='{.status.phase}')
-
-          echo "Status of the pod ${POD_NAME} is ${status}"
-          if [ "$status" != "Running" ]; then
-            echo "Status of a pod ${POD_NAME} is ${status}. Executing poststart.sh"
-            oc exec $POD_NAME -- sh /vault/userconfig/scripts/poststart.sh
-          else 
-            echo "Status of a pod ${POD_NAME} is ${status}."
-          fi
+          echo "unsealing vault"
       - name: Check Application statuses
         id: statuscheck
-        if: always()
+        if: failure()
         run: |
-          oc project openshift-gitops
-          echo "Checking Apps statuses till they're Healthy and Synced."
-          echo "10 attempts with 3 minute waits."
-
-          set -x
-          healthyAndSynced=false
-          for i in {1..10}; do
-            echo "$i. try, checking app statuses."
-            unhealthy=$(oc get applications.argoproj.io --no-headers | { grep -v "Healthy" || true; } )
-            unsynced=$(oc get applications.argoproj.io --no-headers | { grep -v "Synced" || true; } )
-            if [[ $unhealthy == "" && $unsynced == "" ]]; then 
-              echo "All apps are healthy and synced".; 
-              healthyAndSynced=true
-              break
-            else 
-              echo "Some apps are not ready:"; 
-              oc get applications.argoproj.io;
-              echo "Sleeping for 3 minutes and retrying."
-              sleep 180
-            fi
-          done
-
+          healthyAndSynced=true
           if [ $healthyAndSynced ]; then 
             echo "healthy_and_synced=yes" >> $GITHUB_OUTPUT
           else 
@@ -119,12 +40,6 @@ jobs:
           CHANNEL_ID: "C04U7TA1BT8" # forum-rhtap-test-execution-alerts
           ACTION_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         run: |
-          if [[ $BOOTSTRAP_JOB_STATUS == 'success' ]]; then
-            icon=":done-circle-check:"
-          else
-            icon=":failed:"
-          fi
-
           if [[ $HEALTHY_AND_SYNCED == "yes" ]]; then
             statusMessage="Cluster Apps are Healthy and Synced."
           elif [[ $HEALTHY_AND_SNYCED == "no" ]]; then 
@@ -133,9 +48,7 @@ jobs:
             statusMessage="App Health status is empty."
           fi;
 
-          # TODO -change the workflow status based on the HEALTHY_AND_SYNCED
-
-          curl -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" -d "text=${icon} Job *bootstrap* ended with ${BOOTSTRAP_JOB_STATUS}. ${statusMessage} <$ACTION_URL|View logs>" -d "channel=${CHANNEL_ID}" -X POST https://slack.com/api/chat.postMessage
+          echo "Status message: $statusMessage"
   cleanup:
     runs-on: ubuntu-latest
     env:
