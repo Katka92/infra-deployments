@@ -70,6 +70,7 @@ print_help() {
     echo "  -t, --toolchain  (only in preview mode) Install toolchain operators"
     echo "  -kc, --keycloak  (only in preview mode) Configure the toolchain operator to use keycloak deployed on the cluster"
     echo "  -o, --obo        (only in preview mode) Install Observability operator and Prometheus instance for federation"
+    echo "  -b, --broker     (only in preview mode) Install Pact Broker"
     echo "  -h, --help       Show this help message and exit"
     echo
     echo "Example usage: \`$0 preview --toolchain --keycloak --obo"

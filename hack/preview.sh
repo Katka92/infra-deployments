@@ -5,7 +5,6 @@ ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"/..
 
 # Print help message
 function print_help() {
-<<<<<<< HEAD
   echo "Usage: $0 MODE [--toolchain] [--keycloak] [--obo] [-h|--help]"
   echo "  MODE             upstream/preview (default: upstream)"
   echo "  --toolchain  (only in preview mode) Install toolchain operators"
@@ -17,19 +16,6 @@ function print_help() {
 TOOLCHAIN=false
 KEYCLOAK=false
 OBO=false
-=======
-  echo "Usae: $0 MODE [--toolchain] [--keycloak] [--broker] [-h|--help]"
-  echo "  MODE             upstream/preview (default: upstream)"
-  echo "  --toolchain  (only in preview mode) Install toolchain operators"
-  echo "  --keycloak  (only in preview mode) Configure the toolchain operator to use keycloak deployed on the cluster"
-  echo " --broker (only in preview mode) Install Pact Broker"
-  echo
-  echo "Example usage: \`$0 --toolchain --keycloak --broker"
-}
-TOOLCHAIN=false
-KEYCLOAK=false
-BROKER=false
->>>>>>> 05c77590 (Revert "Remove all Pact boker related stuff. (#1607)")
 
 while [[ $# -gt 0 ]]; do
   key=$1
@@ -149,6 +135,7 @@ update_patch_file "${ROOT}/argo-cd-apps/k-components/inject-infra-deployments-re
 update_patch_file "${ROOT}/argo-cd-apps/k-components/inject-infra-deployments-repo-details/application-set-patch.yaml"
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 if $OBO ; then
   echo "Adding Observability operator and Prometheus for federation"
   yq -i '.resources += ["monitoringstack/"]' $ROOT/components/monitoring/prometheus/development/kustomization.yaml
@@ -157,6 +144,16 @@ if $OBO ; then
 if $BROKER; then
   yq -i '.resources += "../../base/host/optional/infra-deployments/hac-pact-broker"' argo-cd-apps/overlays/development/kustomization.yaml
 >>>>>>> 05c77590 (Revert "Remove all Pact boker related stuff. (#1607)")
+=======
+# if broker should be deployed, add it to deployments
+if $BROKER; then
+  yq -i '.resources += "../../base/host/optional/infra-deployments/hac-pact-broker"' argo-cd-apps/overlays/development/kustomization.yaml
+fi
+
+if $OBO ; then
+  echo "Adding Observability operator and Prometheus for federation"
+  yq -i '.resources += ["monitoringstack/"]' $ROOT/components/monitoring/prometheus/development/kustomization.yaml
+>>>>>>> 1563c255 (fix merge conflicts)
 fi
 
 # delete argoCD applications which are not in DEPLOY_ONLY env var if it's set
