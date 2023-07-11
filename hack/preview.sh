@@ -134,26 +134,13 @@ update_patch_file () {
 update_patch_file "${ROOT}/argo-cd-apps/k-components/inject-infra-deployments-repo-details/application-patch.yaml"
 update_patch_file "${ROOT}/argo-cd-apps/k-components/inject-infra-deployments-repo-details/application-set-patch.yaml"
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 if $OBO ; then
   echo "Adding Observability operator and Prometheus for federation"
   yq -i '.resources += ["monitoringstack/"]' $ROOT/components/monitoring/prometheus/development/kustomization.yaml
-=======
-# if broker should be deployed, add it to deployments
-if $BROKER; then
-  yq -i '.resources += "../../base/host/optional/infra-deployments/hac-pact-broker"' argo-cd-apps/overlays/development/kustomization.yaml
->>>>>>> 05c77590 (Revert "Remove all Pact boker related stuff. (#1607)")
-=======
-# if broker should be deployed, add it to deployments
-if $BROKER; then
-  yq -i '.resources += "../../base/host/optional/infra-deployments/hac-pact-broker"' argo-cd-apps/overlays/development/kustomization.yaml
 fi
-
-if $OBO ; then
-  echo "Adding Observability operator and Prometheus for federation"
-  yq -i '.resources += ["monitoringstack/"]' $ROOT/components/monitoring/prometheus/development/kustomization.yaml
->>>>>>> 1563c255 (fix merge conflicts)
+# if broker should be deployed, add it to deployments
+if $BROKER; then
+  yq -i '.resources += "../../base/host/optional/infra-deployments/hac-pact-broker"' argo-cd-apps/overlays/development/kustomization.yaml
 fi
 
 # delete argoCD applications which are not in DEPLOY_ONLY env var if it's set
