@@ -1445,3 +1445,18 @@ spec:
         clientRoles:
           realm-management:
             - "manage-users"
+      - credentials:
+          - type: password
+            valueFrom:
+              secretKeyRef:
+                name: e2e-hac-user
+                key: password
+        email: e2e-hac-user@user.us
+        emailVerified: true
+        enabled: true
+        firstName: e2e-hac-user
+        id: e2e-hac-user
+        username: e2e-hac-user
+        clientRoles:
+          realm-management:
+            - "manage-users"
